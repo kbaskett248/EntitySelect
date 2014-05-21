@@ -1,0 +1,4 @@
+[
+    {   "caption": "Show all highlights", "command": "entityselect_highlight", "args":{"cmd": "show_all"} 
+    },  
+]

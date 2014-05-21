@@ -1,0 +1,23 @@
+[
+    { "keys": ["alt+d"], "command": "doc_link"
+    },
+    { "keys": ["alt+h"], "command": "entityselect_highlight", "args":{"cmd": "highlight"}
+    },
+    { "keys": ["alt+j"], "command": "entityselect_highlight", "args":{"cmd": "forward"}
+    },
+    { "keys": ["alt+k"], "command": "entityselect_highlight", "args":{"cmd": "backward"}
+    },
+    { "keys": ["escape"], "command": "entityselect_highlight", "args":{"cmd": "clear"}, "context": [
+            { "key": "auto_complete_visible", "operator": "equal", "operand": false },
+            { "key": "overlay_visible", "operator": "equal", "operand": false },
+            { "key": "panel_visible", "operator": "equal", "operand": false },
+            { "key": "has_next_field", "operator": "equal", "operand": false },
+            { "key": "has_prev_field", "operator": "equal", "operand": false },
+            { "key": "num_selections", "operator": "equal", "operand": 1 }
+        ]
+    },
+    { "keys": ["alt+l"], "command": "entityselect_highlight", "args":{"cmd": "select_all"}
+    },
+    { "keys": ["alt+shift+l"], "command": "entityselect_highlight", "args":{"cmd": "show_all"}
+    },
+]

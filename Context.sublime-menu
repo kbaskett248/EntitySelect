@@ -1,0 +1,19 @@
+[
+    { "caption": "-" },
+    { "command": "doc_link" },
+    {   "command": "entityselect_highlight",
+        "args": {"cmd": "highlight"}
+    },
+    {   "command": "entityselect_highlight",
+        "args": {"cmd": "backward"}
+    },
+    {   "command": "entityselect_highlight",
+        "args": {"cmd": "forward"}
+    },
+    {   "command": "entityselect_highlight",
+        "args": {"cmd": "select_all"}
+    },
+    {   "command": "entityselect_highlight",
+        "args": {"cmd": "clear"}
+    }
+]
