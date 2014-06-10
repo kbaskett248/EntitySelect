@@ -100,7 +100,6 @@ class DocLink(EntitySelector):
             status_message_suffix = 'not found'
         elif (file_ == self.view.file_name()):
             logger.debug('in current file')
-            self.view.show(region, True)
             self.view.sel().clear()
             self.view.sel().add(region)
             if show_at_top:
@@ -108,6 +107,9 @@ class DocLink(EntitySelector):
                line = self.view.line(line.begin() - 1)
                v = self.view.text_to_layout(line.begin())
                self.view.set_viewport_position(v, True)
+            else:
+                self.view.show(region, True)
+
             status_message_suffix = 'found in current file'
         elif not os.path.exists(file_):
             status_message_suffix = 'not found'
