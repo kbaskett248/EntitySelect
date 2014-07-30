@@ -20,6 +20,7 @@ class EntitySelectListenerCommand(sublime_plugin.EventListener):
         # logger.debug('Running on_activated')
         EntitySelector.match_entity(view)
 
+
 class DocLinkCommand(sublime_plugin.TextCommand):
     """Command to find the documentation for the currently selected entity.
 

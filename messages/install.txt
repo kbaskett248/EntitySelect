@@ -1,0 +1,29 @@
+This package provides no functionality on its own. It is a support package to make it easier to
+react to changing selections within a file.
+
+The package currently supports the following concepts:
+  - DocLink: If the current entity supports DocLink, it will be underlined when selected to 
+    indicate there is additional information available for the entity. Pressing Alt+d will 
+    open that additional information.
+  - Status Identifier: If the current entity supports Status Identifier, an informational note
+    will be displayed in the footer bar when that entity is selected.
+  - Highlighting: If the current entity supports Highlighting, you can invoke it to highlight
+    all instances of that entity within the current file, function, class, etc. You can then 
+    navigate between the instances of the entity or select them all. This operates like a quick
+    find for specific entities.
+  - Preemptive Highlighting: If the current entity supports Preemptive Highlighting, you can
+    highlight the entities without first selecting an instance of the entity. This will 
+    usually happen by way of a command or keybinding.
+
+Currently, only the Meditech Focus package requires this package.
+
+Default Keybindings - These commands are also available in the Context Menu:
+  - Alt+D - Invoke DocLink if the current entity supports it. Additional information for the 
+            entity will be opened.
+  - Alt+H - Invoke Highlight if the current entity supports it. All instances of the entity
+            will be highlighted.
+  - Alt+J - Move to the next highlighted instance.
+  - Alt+K - Move to the previous highlighted instance.
+  - Alt+L - Select all highlighted instances.
+  - Alt+Shift+L - Display a quick panel showing all highlighted instances.
+  - Esc - Clear highlights if they are visible.
