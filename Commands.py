@@ -1,9 +1,7 @@
 import sublime
 import sublime_plugin
 
-from .src.EntitySelector import EntitySelector
-from .src.DocLink import DocLink
-from .src.Highlight import Highlight, PreemptiveHighlight
+from EntitySelect import EntitySelector, DocLink, Highlight, PreemptiveHighlight
 
 try:
     import sublimelogging
@@ -21,6 +19,7 @@ class EntitySelectListenerCommand(sublime_plugin.EventListener):
     def on_activated_async(self, view):
         # logger.debug('Running on_activated')
         EntitySelector.match_entity(view)
+
 
 class DocLinkCommand(sublime_plugin.TextCommand):
     """Command to find the documentation for the currently selected entity.
@@ -246,11 +245,10 @@ class HighlightListenerCommand(sublime_plugin.EventListener):
         else:
             view.erase_regions('entity_select_highlight')
 
+
 class EntitySelectInsertInViewCommand(sublime_plugin.TextCommand):
 
     def run(self, edit, text, point = 0):
 
         self.view.insert(edit, point, text)
-
-
 
