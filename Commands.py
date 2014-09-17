@@ -9,7 +9,8 @@ try:
 except ImportError:
     import logging
     logger = logging.getLogger(__name__)
-    
+
+
 class EntitySelectListenerCommand(sublime_plugin.EventListener):
 
     def on_selection_modified_async(self, view):
@@ -26,7 +27,7 @@ class DocLinkCommand(sublime_plugin.TextCommand):
 
     This command can be extended by defining new DocFinder classes.
 
-    """ 
+    """
 
     def run(self, edit):
         """Calls the show method of the DocFinder assigned to the view."""
@@ -60,7 +61,8 @@ class DocLinkCommand(sublime_plugin.TextCommand):
     def is_enabled(self):
         """Returns True if a DocFinder is assigned to the view."""
         try:
-            return EntitySelector.get_selector_for_view(self.view).enable_doc_link()
+            return EntitySelector.get_selector_for_view(
+                self.view).enable_doc_link()
         except AttributeError:
             return False
 
@@ -70,7 +72,7 @@ class EntityselectHighlightCommand(sublime_plugin.TextCommand):
 
     This command can be extended by defining new DocFinder classes.
 
-    """ 
+    """
 
     def run(self, edit, cmd):
         """Calls the show method of the DocFinder assigned to the view."""
@@ -86,9 +88,9 @@ class EntityselectHighlightCommand(sublime_plugin.TextCommand):
             if hl is None:
                 pass
             elif cmd == Highlight.FORWARD_COMMAND:
-                hl.move_to_highlight(forward = True)
+                hl.move_to_highlight(forward=True)
             elif cmd == Highlight.BACKWARD_COMMAND:
-                hl.move_to_highlight(forward = False)
+                hl.move_to_highlight(forward=False)
             elif cmd == Highlight.CLEAR_COMMAND:
                 hl.remove_highlighter_from_view()
             elif cmd == Highlight.SELECT_ALL_COMMAND:
@@ -100,7 +102,8 @@ class EntityselectHighlightCommand(sublime_plugin.TextCommand):
         """Returns the description for the DocFinder assigned to the view."""
         if cmd == Highlight.HIGHLIGHT_COMMAND:
             try:
-                return EntitySelector.get_selector_for_view(self.view).highlight_description(cmd)
+                return EntitySelector.get_selector_for_view(
+                    self.view).highlight_description(cmd)
             except AttributeError:
                 return 'Highlight'
         else:
@@ -113,7 +116,8 @@ class EntityselectHighlightCommand(sublime_plugin.TextCommand):
         """Returns true if the current file is an M-AT file."""
         if cmd == Highlight.HIGHLIGHT_COMMAND:
             try:
-                for s in EntitySelector.get_possible_selectors_for_view(self.view):
+                for s in EntitySelector.get_possible_selectors_for_view(
+                        self.view):
                     if Highlight in s.__mro__:
                         return True
             except AttributeError:
@@ -128,7 +132,8 @@ class EntityselectHighlightCommand(sublime_plugin.TextCommand):
         """Returns True if a Highlighter is assigned to the view."""
         if cmd == Highlight.HIGHLIGHT_COMMAND:
             try:
-                return EntitySelector.get_selector_for_view(self.view).enable_highlight()
+                return EntitySelector.get_selector_for_view(
+                    self.view).enable_highlight()
             except AttributeError:
                 return False
         elif Highlight.get_highlighter_for_view(self.view) is None:
@@ -165,7 +170,7 @@ class PreemptiveHighlightCommand(sublime_plugin.TextCommand):
 
     This command can be extended by defining new DocFinder classes.
 
-    """ 
+    """
 
     def run(self, edit, highlighter):
         """Calls the show method of the DocFinder assigned to the view."""
@@ -209,14 +214,16 @@ class PreemptiveHighlightCommand(sublime_plugin.TextCommand):
             if current_selector is None:
                 EntitySelector.update_selector_for_view(self.view, None)
             else:
-                current_selector.__class__.update_selector_for_view(self.view, current_selector)
+                current_selector.__class__.update_selector_for_view(
+                    self.view, current_selector)
 
     def copy_current_selection(self):
         return [r for r in self.view.sel()]
 
     def is_visible(self, highlighter):
         """Returns true if the current file is an M-AT file."""
-        if PreemptiveHighlight.get_preemptive_highlighter(highlighter) is not None:
+        if (PreemptiveHighlight.get_preemptive_highlighter(highlighter)
+                is not None):
             return True
         return False
 
@@ -248,7 +255,5 @@ class HighlightListenerCommand(sublime_plugin.EventListener):
 
 class EntitySelectInsertInViewCommand(sublime_plugin.TextCommand):
 
-    def run(self, edit, text, point = 0):
-
+    def run(self, edit, text, point=0):
         self.view.insert(edit, point, text)
-
