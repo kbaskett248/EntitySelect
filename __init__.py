@@ -13,7 +13,7 @@ try:
 except ImportError:
     import logging
     logger = logging.getLogger(__name__)
-    logger.setLevel('DEBUG')
+    # logger.setLevel('DEBUG')
 
 
 class EntitySelector(object, metaclass=SortableABCMeta):
@@ -821,15 +821,20 @@ class StatusIdentifier(EntitySelector):
         self._status_string = value
 
     @staticmethod
-    def display_status_string(view = None, selector = None, **kwargs):
-        """Adds the status string to the status bar.
+    def display_status_string(view=None, selector=None, **kwargs):
+        """
+        Adds the status string to the status bar.
 
         Runs as an On After Check Callback.
 
         """
+
         if ((view is not None) and (selector is not None) and
-            isinstance(selector, StatusIdentifier) and selector.enable_status_string()):
-            view.set_status(StatusIdentifier.StatusKey, selector.status_string)
+                isinstance(selector, StatusIdentifier)):
+            if (selector.enable_status_string() and
+                    (selector.status_string is not None)):
+                view.set_status(StatusIdentifier.StatusKey,
+                                selector.status_string)
 
     @staticmethod
     def erase_status_string(view = None, **kwargs):
