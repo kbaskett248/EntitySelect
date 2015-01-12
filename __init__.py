@@ -648,9 +648,9 @@ class Highlight(EntitySelector):
 
         """
         self.view.add_regions('entity_select_highlight',
-                              self.highlight_regions, 
-                              'string', 
-                              'dot',
+                              self.highlight_regions,
+                              'string',
+                              'Packages/EntitySelect/icons/highlight.png',
                               sublime.DRAW_NO_FILL)
         Highlight.display_status_string(view=self.view, highlighter=self)
 
