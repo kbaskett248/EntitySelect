@@ -75,8 +75,10 @@ class EntitySelector(object, metaclass=SortableABCMeta):
         return True
 
     @classmethod
-    def check_scope_for_selection(cls, view, check_all_regions = False):
-        """Returns a list of score for the defined scope across the selections in the view.
+    def check_scope_for_selection(cls, view, check_all_regions=False):
+        """
+        Returns a list of score for the defined scope across the selections in
+        the view.
 
         Keyword arguments:
         check_all_regions - If this is True, all selections in the view are
@@ -84,10 +86,15 @@ class EntitySelector(object, metaclass=SortableABCMeta):
 
         """
         if check_all_regions:
-            return [view.score_selector(s.begin(), cls.scope_selection_enabler())
+            return [view.score_selector(s.begin(),
+                                        cls.scope_selection_enabler())
                     for s in view.sel()]
         else:
-            return [view.score_selector(view.sel()[0].begin(), cls.scope_selection_enabler())]
+            try:
+                return [view.score_selector(view.sel()[0].begin(),
+                                            cls.scope_selection_enabler())]
+            except KeyError:
+                return []
 
     @classmethod
     @abstractmethod
