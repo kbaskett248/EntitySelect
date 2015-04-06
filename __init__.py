@@ -448,7 +448,25 @@ class DocLink(EntitySelector):
         """Opens the given url in the default web browser."""
         webbrowser.open(url)
 
-    def show_doc_in_file(self, file_, region = None, row = 0, col = 0, show_at_top = True):
+    def show_doc_in_popup(self, content, max_width=320, max_height=240):
+        '''Opens the specified content in a popup.'''
+        self.view.show_popup(content, max_width=max_width,
+                             max_height=max_height)
+
+    def show_doc_in_panel(self, content, panel_name='doc_link_content',
+                          syntax="Packages/Text/Plain text.tmLanguage"):
+        window = sublime.active_window()
+        output_panel = window.create_output_panel(panel_name)
+        output_panel.set_read_only(False)
+        output_panel.run_command('entity_select_insert_in_view',
+                                 {'text': content})
+        output_panel.set_read_only(True)
+        output_panel.assign_syntax(syntax)
+        window.run_command('show_panel',
+                           {'panel': 'output.'+panel_name})
+
+    def show_doc_in_file(self, file_, region=None, row=0, col=0,
+                         show_at_top=True):
         """Opens the file and shows the given region."""
         logger.debug('show_doc_in_file')
         status_message_suffix = ''
