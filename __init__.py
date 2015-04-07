@@ -448,10 +448,15 @@ class DocLink(EntitySelector):
         """Opens the given url in the default web browser."""
         webbrowser.open(url)
 
-    def show_doc_in_popup(self, content, max_width=320, max_height=240):
+    def show_doc_in_popup(self, content, max_width=400, max_height=400):
         '''Opens the specified content in a popup.'''
-        self.view.show_popup(content, max_width=max_width,
-                             max_height=max_height)
+        if hasattr(self, 'popup_navigate'):
+            self.view.show_popup(content, max_width=max_width,
+                                 max_height=max_height,
+                                 on_navigate=self.popup_navigate)
+        else:
+            self.view.show_popup(content, max_width=max_width,
+                                 max_height=max_height)
 
     def show_doc_in_panel(self, content, panel_name='doc_link_content',
                           syntax="Packages/Text/Plain text.tmLanguage"):
