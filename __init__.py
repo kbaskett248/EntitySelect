@@ -7,13 +7,9 @@ import sublime
 
 from .src.SortableABCMeta import SortableABCMeta, abstractmethod
 
-try:
-    import sublimelogging
-    logger = sublimelogging.getLogger(__name__)
-except ImportError:
-    import logging
-    logger = logging.getLogger(__name__)
-    # logger.setLevel('DEBUG')
+import logging
+logger = logging.getLogger(__name__)
+logger.setLevel('DEBUG')
 
 
 class EntitySelector(object, metaclass=SortableABCMeta):
