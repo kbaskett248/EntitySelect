@@ -9,7 +9,7 @@ from .src.SortableABCMeta import SortableABCMeta, abstractmethod
 
 import logging
 logger = logging.getLogger(__name__)
-logger.setLevel('DEBUG')
+logger.setLevel('INFO')
 
 
 class EntitySelector(object, metaclass=SortableABCMeta):
@@ -249,7 +249,12 @@ class EntitySelector(object, metaclass=SortableABCMeta):
                     logger.exception('Error occurred in EntitySelector on_after_check callback')
 
     @classmethod
+    def UniqueKey(cls):
+        return str((cls, cls.ADDED_TIME))
+
+    @classmethod
     def add_possible_selector(cls):
+        cls.ADDED_TIME = time.monotonic()
         EntitySelector.PossibleSelectors.append(cls)
 
     @classmethod
@@ -897,7 +902,7 @@ class ViewData(object):
         scope = ViewData.scope_from_view(view)
         hash_ = ViewData.get_possible_selectors_hash()
         if ((self.scope != scope) or
-            (self.possible_selectors_hash != hash_)):
+                (self.possible_selectors_hash != hash_)):
             self.scope = scope
             self.update_possible_selectors(view)
 
@@ -921,7 +926,8 @@ class ViewData(object):
 
     @staticmethod
     def get_possible_selectors_hash():
-        return hash(str(EntitySelector.PossibleSelectors))
+        hash_list = [c.UniqueKey() for c in EntitySelector.PossibleSelectors]
+        return hash(str(hash_list))
 
 
 DocLink.add_on_before_check_callback(DocLink.erase_regions)
