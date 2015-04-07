@@ -12,6 +12,9 @@ logger = logging.getLogger(__name__)
 logger.setLevel('INFO')
 
 
+TOOLTIP_SUPPORT = int(sublime.version()) >= 3072
+
+
 class EntitySelector(object, metaclass=SortableABCMeta):
     """General purpose superclass for matching portions of text."""
 
@@ -449,8 +452,17 @@ class DocLink(EntitySelector):
         """Opens the given url in the default web browser."""
         webbrowser.open(url)
 
+    def has_popup_support(self):
+        return TOOLTIP_SUPPORT
+
     def show_doc_in_popup(self, content, max_width=400, max_height=400):
         '''Opens the specified content in a popup.'''
+        if not self.has_popup_support():
+            logger.warning(
+                'Sublime Text version (%s) unable to display popups',
+                sublime.version())
+            return
+
         if hasattr(self, 'popup_navigate'):
             self.view.show_popup(content, max_width=max_width,
                                  max_height=max_height,
