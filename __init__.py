@@ -9,7 +9,6 @@ from .src.SortableABCMeta import SortableABCMeta, abstractmethod
 
 import logging
 logger = logging.getLogger(__name__)
-logger.setLevel('INFO')
 
 
 TOOLTIP_SUPPORT = int(sublime.version()) >= 3072

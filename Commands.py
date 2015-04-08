@@ -3,12 +3,9 @@ import sublime_plugin
 
 from EntitySelect import EntitySelector, DocLink, Highlight, PreemptiveHighlight
 
-try:
-    import sublimelogging
-    logger = sublimelogging.getLogger(__name__)
-except ImportError:
-    import logging
-    logger = logging.getLogger(__name__)
+import logging
+logger = logging.getLogger(__name__)
+logger.setLevel('DEBUG')
 
 
 class EntitySelectListenerCommand(sublime_plugin.EventListener):
