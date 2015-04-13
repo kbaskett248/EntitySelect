@@ -53,6 +53,7 @@ class DocLinkCommand(sublime_plugin.TextCommand):
                     return True
         except AttributeError:
             pass
+
         return False
 
     def is_enabled(self):
@@ -60,6 +61,52 @@ class DocLinkCommand(sublime_plugin.TextCommand):
         try:
             return EntitySelector.get_selector_for_view(
                 self.view).enable_doc_link()
+        except AttributeError:
+            return False
+
+
+class AddDocCommand(sublime_plugin.TextCommand):
+    """Command to add documentation for the currently selected entity.
+
+    This command can be extended by defining new DocFinder classes.
+
+    """
+
+    def run(self, edit):
+        """Calls the show method of the DocFinder assigned to the view."""
+        try:
+            s = EntitySelector.get_selector_for_view(self.view)
+            if s.enable_add_doc():
+                s.add_doc(edit)
+        except AttributeError:
+            pass
+
+    def description(self):
+        """Returns the description for the DocFinder assigned to the view."""
+        try:
+            es = EntitySelector.get_selector_for_view(self.view)
+            if es.enable_add_doc():
+                return es.add_doc_description()
+        except AttributeError:
+            pass
+        return 'Add Doc'
+
+    def is_visible(self):
+        """Returns true if the current file is an M-AT file."""
+        try:
+            return EntitySelector.get_selector_for_view(
+                self.view).enable_add_doc()
+        except AttributeError:
+            return False
+
+    def is_enabled(self):
+        """Returns True if a DocFinder is assigned to the view."""
+        try:
+            s = EntitySelector.get_selector_for_view(self.view)
+            if hasattr(s, 'has_doc'):
+                return not s.has_doc()
+            else:
+                return True
         except AttributeError:
             return False
 

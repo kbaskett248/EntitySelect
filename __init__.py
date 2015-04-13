@@ -261,7 +261,10 @@ class EntitySelector(object, metaclass=SortableABCMeta):
 
     @classmethod
     def remove_possible_selector(cls):
-        EntitySelector.PossibleSelectors.remove(cls)
+        try:
+            EntitySelector.PossibleSelectors.remove(cls)
+        except ValueError:
+            pass
 
     @classmethod
     def match_entity(cls, view):
@@ -419,6 +422,16 @@ class DocLink(EntitySelector):
 
         return 'DocLink'
 
+    def add_doc_description(self):
+        """Return a description string to display in the context menu."""
+        try:
+            if self.search_string:
+                return 'Add Doc: %s' % self.search_string
+        except AttributeError:
+            pass
+
+        return 'Add Doc'
+
     @property
     def open_status_message(self):
         """Status message displayed when opening documentation."""
@@ -446,6 +459,9 @@ class DocLink(EntitySelector):
     def enable_doc_link(self):
         """Return True to allow DocLink functionality for the EntitySelector."""
         return True
+
+    def enable_add_doc(self):
+        return hasattr(self, 'add_doc')
 
     def show_doc_on_web(self, url):
         """Opens the given url in the default web browser."""
