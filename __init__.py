@@ -7,20 +7,19 @@ import sublime
 
 from .src.SortableABCMeta import SortableABCMeta, abstractmethod
 
-try:
-    import sublimelogging
-    logger = sublimelogging.getLogger(__name__)
-except ImportError:
-    import logging
-    logger = logging.getLogger(__name__)
+import logging
+logger = logging.getLogger(__name__)
 
 
-class EntitySelector(object, metaclass = SortableABCMeta):
+TOOLTIP_SUPPORT = int(sublime.version()) >= 3072
+
+
+class EntitySelector(object, metaclass=SortableABCMeta):
     """General purpose superclass for matching portions of text."""
-    
-    # Dictionary used to store data about a view. The dictionary is keyed by 
+
+    # Dictionary used to store data about a view. The dictionary is keyed by
     # the view ID and contains ViewData objects.
-    ViewSelectors = dict() 
+    ViewSelectors = dict()
 
     # A list of all possible EntitySelector classes to check
     PossibleSelectors = []
@@ -41,12 +40,12 @@ class EntitySelector(object, metaclass = SortableABCMeta):
     #   selector - If the view has a current EntitySelector, this will be that
     #              selector. Otherwise, it will be None.
     #   view - The given view
-    OnAfterCheckCallbacks = []    
+    OnAfterCheckCallbacks = []
 
     @classmethod
     @abstractmethod
     def scope_view_enabler(cls):
-        """This should return a scope that will determine if an EntitySelector 
+        """This should return a scope that will determine if an EntitySelector
         will be enabled for a view.
 
         This function should be overloaded by all extending classes.
@@ -74,24 +73,31 @@ class EntitySelector(object, metaclass = SortableABCMeta):
         return True
 
     @classmethod
-    def check_scope_for_selection(cls, view, check_all_regions = False):
-        """Returns a list of score for the defined scope across the selections in the view.
+    def check_scope_for_selection(cls, view, check_all_regions=False):
+        """
+        Returns a list of score for the defined scope across the selections in
+        the view.
 
         Keyword arguments:
-        check_all_regions - If this is True, all selections in the view are 
+        check_all_regions - If this is True, all selections in the view are
             checked. Otherwise, only the first selection is checked.
 
         """
         if check_all_regions:
-            return [view.score_selector(s.begin(), cls.scope_selection_enabler())
+            return [view.score_selector(s.begin(),
+                                        cls.scope_selection_enabler())
                     for s in view.sel()]
         else:
-            return [view.score_selector(view.sel()[0].begin(), cls.scope_selection_enabler())]
+            try:
+                return [view.score_selector(view.sel()[0].begin(),
+                                            cls.scope_selection_enabler())]
+            except KeyError:
+                return []
 
     @classmethod
     @abstractmethod
     def scope_selection_enabler(cls):
-        """Returns the name of a scope to determine if an EntitySelector will 
+        """Returns the name of a scope to determine if an EntitySelector will
         be enabled for the current selection.
 
         This function should be overloaded by all extending classes."""
@@ -101,7 +107,7 @@ class EntitySelector(object, metaclass = SortableABCMeta):
     def enable_for_selection(cls, view):
         """Returns True if the EntitySelector should be enabled for the given selection.
 
-        This allows for checking in addition to the scope check. The EntitySelector 
+        This allows for checking in addition to the scope check. The EntitySelector
         object should be created within this function.
 
         """
@@ -112,7 +118,7 @@ class EntitySelector(object, metaclass = SortableABCMeta):
     def update_selector_for_view(cls, view, selector = None):
         """Updates the EntitySelector assigned to the specified view.
 
-        If no ViewData object exists for the view, one is created and the 
+        If no ViewData object exists for the view, one is created and the
         specified selector is assigned.
 
         """
@@ -245,16 +251,24 @@ class EntitySelector(object, metaclass = SortableABCMeta):
                     logger.exception('Error occurred in EntitySelector on_after_check callback')
 
     @classmethod
+    def UniqueKey(cls):
+        return str((cls, cls.ADDED_TIME))
+
+    @classmethod
     def add_possible_selector(cls):
+        cls.ADDED_TIME = time.monotonic()
         EntitySelector.PossibleSelectors.append(cls)
 
     @classmethod
     def remove_possible_selector(cls):
-        EntitySelector.PossibleSelectors.remove(cls)
+        try:
+            EntitySelector.PossibleSelectors.remove(cls)
+        except ValueError:
+            pass
 
     @classmethod
     def match_entity(cls, view):
-        """Checks the loaded DocFinders. If one is found matching the current 
+        """Checks the loaded DocFinders. If one is found matching the current
         selection, the word is underlined.
 
         """
@@ -286,19 +300,21 @@ class EntitySelector(object, metaclass = SortableABCMeta):
 
     @classmethod
     def check_regions(cls, view):
-        """Returns False if there is a difference between the start and end scope of a selection.
+        """
+        Returns False if there is a difference between the start and end scope
+        of a selection.
 
-        Compares the beginning and end of all selections. If there is any 
+        Compares the beginning and end of all selections. If there is any
         difference between them for any of the selections, return False.
         Otherwise return True.
 
         """
         for s in view.sel():
             start_scope = view.scope_name(s.begin()).strip()
-            if view.scope_name(s.end()).strip() != start_scope:
+            if view.score_selector(s.end(), start_scope) <= 0:
                 if s.empty():
                     return False
-                elif view.scope_name(s.end()-1).strip() != start_scope:
+                elif view.score_selector(s.end() - 1, start_scope) <= 0:
                     return False
             start_scope = start_scope.split(' ')[-1]
             try:
@@ -315,9 +331,14 @@ class EntitySelector(object, metaclass = SortableABCMeta):
         self.regions = view.sel()
         self.__class__.update_selector_for_view(view, self)
 
-    def compare_current_selection(self, view, check_all_regions = False):
-        """Returns True if the current view selection matches the selections stored in the selector."""
-        for score in self.__class__.check_scope_for_selection(view, check_all_regions):
+    def compare_current_selection(self, view, check_all_regions=False):
+        """
+        Returns True if the current view selection matches the selections
+        stored in the selector.
+
+        """
+        for score in self.__class__.check_scope_for_selection(
+                view, check_all_regions):
             if score <= 0:
                 return False
 
@@ -344,14 +365,14 @@ class EntitySelector(object, metaclass = SortableABCMeta):
             except AttributeError:
                 pass
         return types
-    
+
 
     @staticmethod
     def get_defined_classes(globals_):
         file_ = globals_['__file__']
-        return [c for c in globals_.values() if 
-                (inspect.isclass(c) and 
-                 (inspect.getfile(c) == file_) and 
+        return [c for c in globals_.values() if
+                (inspect.isclass(c) and
+                 (inspect.getfile(c) == file_) and
                  (EntitySelector in inspect.getmro(c))
                 )]
 
@@ -361,8 +382,8 @@ class DocLink(EntitySelector):
     def __init__(self, view, search_string = None, search_region = None, **kwargs):
         if search_region is not None:
             if DocLink.selection_in_region(view, search_region):
-                super(DocLink, self).__init__(view, search_string = search_string, 
-                                              search_region = search_region, 
+                super(DocLink, self).__init__(view, search_string = search_string,
+                                              search_region = search_region,
                                               **kwargs)
                 if (search_string is None):
                     self.search_string = view.substr(search_region)
@@ -372,8 +393,8 @@ class DocLink(EntitySelector):
             else:
                 logger.warning('Selection not in Region: %s - %s', search_region, search_string)
         else:
-            super(DocLink, self).__init__(view, search_string = search_string, 
-                                          search_region = search_region, 
+            super(DocLink, self).__init__(view, search_string = search_string,
+                                          search_region = search_region,
                                           **kwargs)
             self.regions = [search_region]
             self.search_string = search_string
@@ -398,8 +419,18 @@ class DocLink(EntitySelector):
                 return 'DocLink: %s' % self.search_string
         except AttributeError:
             pass
-        
+
         return 'DocLink'
+
+    def add_doc_description(self):
+        """Return a description string to display in the context menu."""
+        try:
+            if self.search_string:
+                return 'Add Doc: %s' % self.search_string
+        except AttributeError:
+            pass
+
+        return 'Add Doc'
 
     @property
     def open_status_message(self):
@@ -409,31 +440,66 @@ class DocLink(EntitySelector):
     @staticmethod
     def add_regions(view = None, selector = None, **kwargs):
         """Adds regions to the view and assigns the DocFinder to the view."""
-        if ((view is not None) and (selector is not None) and 
+        if ((view is not None) and (selector is not None) and
             isinstance(selector, DocLink) and selector.enable_doc_link()):
-            view.add_regions('doc_link', selector.regions, 
+            view.add_regions('doc_link', selector.regions,
                              view.scope_name(selector.regions[0].begin()),
-                             flags = (sublime.DRAW_NO_FILL | 
+                             flags = (sublime.DRAW_NO_FILL |
                                       sublime.DRAW_NO_OUTLINE |
                                       sublime.DRAW_STIPPLED_UNDERLINE |
                                       sublime.HIDE_ON_MINIMAP)
                          )
-    
+
     @staticmethod
     def erase_regions(view = None, **kwargs):
         """Clears regions from the view and clears the DocFinder assigned to the view."""
         if view is not None:
             view.erase_regions('doc_link')
-    
+
     def enable_doc_link(self):
         """Return True to allow DocLink functionality for the EntitySelector."""
         return True
+
+    def enable_add_doc(self):
+        return hasattr(self, 'add_doc')
 
     def show_doc_on_web(self, url):
         """Opens the given url in the default web browser."""
         webbrowser.open(url)
 
-    def show_doc_in_file(self, file_, region = None, row = 0, col = 0, show_at_top = True):
+    def has_popup_support(self):
+        return TOOLTIP_SUPPORT
+
+    def show_doc_in_popup(self, content, max_width=400, max_height=400):
+        '''Opens the specified content in a popup.'''
+        if not self.has_popup_support():
+            logger.warning(
+                'Sublime Text version (%s) unable to display popups',
+                sublime.version())
+            return
+
+        if hasattr(self, 'popup_navigate'):
+            self.view.show_popup(content, max_width=max_width,
+                                 max_height=max_height,
+                                 on_navigate=self.popup_navigate)
+        else:
+            self.view.show_popup(content, max_width=max_width,
+                                 max_height=max_height)
+
+    def show_doc_in_panel(self, content, panel_name='doc_link_content',
+                          syntax="Packages/Text/Plain text.tmLanguage"):
+        window = sublime.active_window()
+        output_panel = window.create_output_panel(panel_name)
+        output_panel.set_read_only(False)
+        output_panel.run_command('entity_select_insert_in_view',
+                                 {'text': content})
+        output_panel.set_read_only(True)
+        output_panel.assign_syntax(syntax)
+        window.run_command('show_panel',
+                           {'panel': 'output.'+panel_name})
+
+    def show_doc_in_file(self, file_, region=None, row=0, col=0,
+                         show_at_top=True):
         """Opens the file and shows the given region."""
         logger.debug('show_doc_in_file')
         status_message_suffix = ''
@@ -463,12 +529,12 @@ class DocLink(EntitySelector):
                              sublime.ENCODED_POSITION)
                 if ((row != 0) and (col != 0)):
                     sublime.set_timeout_async(
-                        lambda: self.show_and_select_opened_file(view, region, 
+                        lambda: self.show_and_select_opened_file(view, region,
                                     row, col, show_at_top), 0)
             else:
                 view = self.view.window().open_file(file_, sublime.ENCODED_POSITION)
                 sublime.set_timeout_async(
-                    lambda: self.show_and_select_opened_file(view, region, 
+                    lambda: self.show_and_select_opened_file(view, region,
                                 row, col, show_at_top), 0)
 
         return status_message_suffix
@@ -498,10 +564,10 @@ class DocLink(EntitySelector):
 class Highlight(EntitySelector):
     """Base class that adds highlighting functionality to EntitySelectors."""
 
-    # Dictionary linking a view with its Assigned highlighter object. 
+    # Dictionary linking a view with its Assigned highlighter object.
     Highlighters = dict()
 
-    # Constants for each available highlighter command. 
+    # Constants for each available highlighter command.
     HIGHLIGHT_COMMAND = 'highlight'
 
     FORWARD_COMMAND = 'forward'
@@ -516,11 +582,11 @@ class Highlight(EntitySelector):
 
     STATUS_KEY = 'entity_select_num_highlights'
 
-    def __init__(self, view, search_string = None, search_region = None, **kwargs):
-        super(Highlight, self).__init__(view, search_string = search_string, 
-                                              search_region = search_region, 
-                                              **kwargs)
-        if search_string == None:
+    def __init__(self, view, search_string=None, search_region=None, **kwargs):
+        super(Highlight, self).__init__(view, search_string=search_string,
+                                        search_region=search_region,
+                                        **kwargs)
+        if search_string is None:
             self.search_string = view.substr(search_region)
         else:
             self.search_string = search_string
@@ -553,15 +619,15 @@ class Highlight(EntitySelector):
     @property
     def highlight_description_forward(self):
         return 'Next instance of ' + self.search_string
-    
+
     @property
     def highlight_description_backward(self):
         return 'Previous instance of ' + self.search_string
-    
+
     @property
     def highlight_description_clear(self):
         return 'Clear highlights'
-    
+
     @property
     def highlight_description_select_all(self):
         return 'Select all instances of ' + self.search_string
@@ -570,8 +636,10 @@ class Highlight(EntitySelector):
     def highlight_description_show_all(self):
         return 'Show all instances of ' + self.search_string
 
-    def highlight_status_message(self, total, selection = None):
-        """Return a message to be displayed in the status bar when highlights are shown.
+    def highlight_status_message(self, total, selection=None):
+        """
+        Return a message to be displayed in the status bar when highlights are
+        shown.
 
         Keyword arguments:
         total - the total number of visible highlights
@@ -585,9 +653,13 @@ class Highlight(EntitySelector):
             return "%s of %s highlighted regions" % (selection, total)
         else:
             return "%s highlighted regions" % total
-    
+
     def enable_highlight(self):
-        """This method can be overridden if highlighting should be enabled only for certain selections."""
+        """
+        This method can be overridden if highlighting should be enabled only
+        for certain selections.
+
+        """
         return True
 
     def highlight(self):
@@ -620,7 +692,11 @@ class Highlight(EntitySelector):
 
     @abstractmethod
     def get_highlight_regions(self):
-        """Return a list of regions to highlight. This method should be overridden by subclasses."""
+        """
+        Return a list of regions to highlight. This method should be
+        overridden by subclasses.
+
+        """
         return []
 
     def add_highlight_regions(self):
@@ -630,11 +706,11 @@ class Highlight(EntitySelector):
 
         """
         self.view.add_regions('entity_select_highlight',
-                              self.highlight_regions, 
-                              'string', 
-                              'dot',
+                              self.highlight_regions,
+                              'string',
+                              'Packages/EntitySelect/icons/highlight.png',
                               sublime.DRAW_NO_FILL)
-        Highlight.display_status_string(view = self.view, highlighter = self)
+        Highlight.display_status_string(view=self.view, highlighter=self)
 
     def erase_highlight_regions(self):
         """Remove the highlight regions from the view.
@@ -645,8 +721,10 @@ class Highlight(EntitySelector):
         self.view.erase_regions('entity_select_highlight')
         self.view.erase_status(Highlight.STATUS_KEY)
 
-    def move_to_highlight(self, forward = True):
-        """Replace the current selection with the next or previous highlight and show it.
+    def move_to_highlight(self, forward=True):
+        """
+        Replace the current selection with the next or previous highlight and
+        show it.
 
         Keyword arguments:
         forward - True to move forward. Otherwise moves backward.
@@ -684,38 +762,44 @@ class Highlight(EntitySelector):
         self.view.show(sel[0], True)
 
     def get_display_region(self, reg):
-        """Return a string to display in the palette list for the given region."""
+        """
+        Return a string to display in the palette list for the given region.
+
+        """
         return '%s: %s' % (self.view.rowcol(reg.begin())[0] + 1,
                            self.view.substr(self.view.line(reg)))
 
     @staticmethod
-    def display_status_string(view = None, highlighter = None, **kwargs):
-        """Adds or updates the Highlighter status string.
+    def display_status_string(view=None, highlighter=None, **kwargs):
+        """
+        Adds or updates the Highlighter status string.
 
         This is added as an On After Check Callback.
-        
+
         """
-        if (view is not None):
+        if view is not None:
             if highlighter is None:
                 highlighter = Highlight.get_highlighter_for_view(view)
             if (highlighter is not None):
+                logger.debug("highlighter: %s", highlighter)
                 hr = highlighter.get_highlight_regions()
                 sel = view.sel()[0]
                 current = None
-                for i, r in enumerate(hr, start = 1):
+                for i, r in enumerate(hr, start=1):
                     if r.intersects(sel):
                         current = i
                         break
-                view.set_status(Highlight.STATUS_KEY, 
-                                highlighter.highlight_status_message(len(hr), 
-                                                                     selection = current))
+                logger.debug('current = %s', current)
+                view.set_status(Highlight.STATUS_KEY,
+                                highlighter.highlight_status_message(
+                                    len(hr), selection=current))
             else:
                 view.erase_status(Highlight.STATUS_KEY)
 
 
 class PreemptiveHighlight(Highlight):
 
-    # A dictionary used to store any registered Preemptive Highlighters by 
+    # A dictionary used to store any registered Preemptive Highlighters by
     # the preemptive_highlight_id().
     PreemptiveHighlighters = dict()
 
@@ -773,7 +857,7 @@ class PreemptiveHighlight(Highlight):
             logger.error('{name} is not a recognized Preemptive Highlighter'.format(name = ident))
             return None
 
-    
+
 class StatusIdentifier(EntitySelector):
 
     StatusKey = '_status_identifier'
@@ -793,18 +877,23 @@ class StatusIdentifier(EntitySelector):
     @status_string.setter
     def status_string(self, value):
         self._status_string = value
-    
+
     @staticmethod
-    def display_status_string(view = None, selector = None, **kwargs):
-        """Adds the status string to the status bar.
+    def display_status_string(view=None, selector=None, **kwargs):
+        """
+        Adds the status string to the status bar.
 
         Runs as an On After Check Callback.
 
         """
-        if ((view is not None) and (selector is not None) and 
-            isinstance(selector, StatusIdentifier) and selector.enable_status_string()):
-            view.set_status(StatusIdentifier.StatusKey, selector.status_string)
-    
+
+        if ((view is not None) and (selector is not None) and
+                isinstance(selector, StatusIdentifier)):
+            if (selector.enable_status_string() and
+                    (selector.status_string is not None)):
+                view.set_status(StatusIdentifier.StatusKey,
+                                selector.status_string)
+
     @staticmethod
     def erase_status_string(view = None, **kwargs):
         """Erases the status string from the status bar.
@@ -814,7 +903,7 @@ class StatusIdentifier(EntitySelector):
         """
         if view is not None:
             view.erase_status(StatusIdentifier.StatusKey)
-    
+
     def enable_status_string(self):
         return True
 
@@ -833,14 +922,14 @@ class ViewData(object):
         """Returns a list of possible EntitySelector classes for a view.
 
         The selectors returned here are based in part on the primary source
-        scope for a view. That value is stored. If the value changes, the 
+        scope for a view. That value is stored. If the value changes, the
         list of possible EntitySelector classes is recomputed.
 
         """
         scope = ViewData.scope_from_view(view)
         hash_ = ViewData.get_possible_selectors_hash()
-        if ((self.scope != scope) or 
-            (self.possible_selectors_hash != hash_)):
+        if ((self.scope != scope) or
+                (self.possible_selectors_hash != hash_)):
             self.scope = scope
             self.update_possible_selectors(view)
 
@@ -848,7 +937,7 @@ class ViewData(object):
 
     def update_possible_selectors(self, view):
         self.possible_selectors_hash = ViewData.get_possible_selectors_hash()
-        self.possible_selectors = [s for s in EntitySelector.PossibleSelectors 
+        self.possible_selectors = [s for s in EntitySelector.PossibleSelectors
                                    if ((s.check_scope_for_view(view) > 0)
                                        and s.enable_for_view(view))]
 
@@ -859,18 +948,19 @@ class ViewData(object):
             scope = view.scope_name(view.sel()[0].begin())
         except IndexError:
             scope = view.scope_name(0)
-        
+
         return scope.split(' ')[0]
 
     @staticmethod
     def get_possible_selectors_hash():
-        return hash(str(EntitySelector.PossibleSelectors))
+        hash_list = [c.UniqueKey() for c in EntitySelector.PossibleSelectors]
+        return hash(str(hash_list))
 
 
-DocLink.add_on_before_check_callback(DocLink.erase_regions) 
+DocLink.add_on_before_check_callback(DocLink.erase_regions)
 DocLink.add_on_after_check_callback(DocLink.add_regions)
 
 Highlight.add_on_after_check_callback(Highlight.display_status_string)
 
-StatusIdentifier.add_on_before_check_callback(StatusIdentifier.erase_status_string) 
+StatusIdentifier.add_on_before_check_callback(StatusIdentifier.erase_status_string)
 StatusIdentifier.add_on_after_check_callback(StatusIdentifier.display_status_string)

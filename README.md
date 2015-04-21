@@ -18,6 +18,7 @@ or variable is an entity.
     *   DocLink: If the current entity supports DocLink, it will be underlined 
         when selected to indicate there is additional information available 
         for the entity. Pressing Alt+d will open that additional information.
+        You can also optionally add functionality to add documentation.
     *   Status Identifier: If the current entity supports Status Identifier, 
         an informational note will be displayed in the footer bar when that 
         entity is selected.
