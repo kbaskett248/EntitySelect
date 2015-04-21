@@ -1,4 +1,12 @@
 [
-    {   "caption": "Show all highlights", "command": "entityselect_highlight", "args":{"cmd": "show_all"} 
-    },  
+    {   "caption": "Show all highlights", 
+        "command": "entityselect_highlight", 
+        "args":{
+            "cmd": "show_all"
+        } 
+    },
+
+    {   "caption": "Add documentation", 
+        "command": "add_doc", 
+    },
 ]

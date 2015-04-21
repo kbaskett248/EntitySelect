@@ -1,6 +1,7 @@
 [
-    { "caption": "-" },
-    { "command": "doc_link" },
+    {   "caption": "-" },
+    {   "command": "doc_link" },
+    {   "command": "add_doc" },
     {   "command": "entityselect_highlight",
         "args": {"cmd": "highlight"}
     },
