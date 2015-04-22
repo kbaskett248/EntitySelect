@@ -1,0 +1,7 @@
+New Features:
+	- DocLink now supports popup functionality introduced in Build 3072.
+	- A new feature has been added to DocLink: Add Doc. If an entity does not have documentation, 
+	  a DocLink class can define functionality to add it.
+	- The highlight icon has been updated to be more distinct. 
+
+This release also includes several bugfixes.
