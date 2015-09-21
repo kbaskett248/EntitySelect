@@ -3,15 +3,24 @@ import os
 import time
 import webbrowser
 
-import sublime
-
-from .src.SortableABCMeta import SortableABCMeta, abstractmethod
-
 import logging
 logger = logging.getLogger(__name__)
 
+import sublime
 
 TOOLTIP_SUPPORT = int(sublime.version()) >= 3072
+
+try:
+    if TOOLTIP_SUPPORT:
+        import styled_popup
+        STYLED_POPUP_AVAILABLE = True
+except ImportError:
+    STYLED_POPUP_AVAILABLE = False
+    logger.warning(
+        'StyledPopup is not available. Some features will be unavailable.'
+        ' Run "Package Control: Satisfy Dependencies" to install it.')
+
+from .src.SortableABCMeta import SortableABCMeta, abstractmethod
 
 
 class EntitySelector(object, metaclass=SortableABCMeta):
@@ -470,7 +479,7 @@ class DocLink(EntitySelector):
     def has_popup_support(self):
         return TOOLTIP_SUPPORT
 
-    def show_doc_in_popup(self, content, max_width=400, max_height=400):
+    def show_doc_in_popup(self, content, **kwargs):
         '''Opens the specified content in a popup.'''
         if not self.has_popup_support():
             logger.warning(
@@ -478,13 +487,34 @@ class DocLink(EntitySelector):
                 sublime.version())
             return
 
-        if hasattr(self, 'popup_navigate'):
-            self.view.show_popup(content, max_width=max_width,
-                                 max_height=max_height,
-                                 on_navigate=self.popup_navigate)
+        self._show_popup(content, **kwargs)
+
+    def _show_popup(self, msg, *args, additional_style='', max_width=400,
+                    max_height=400, **kwargs):
+        kwargs['max_width'] = max_width
+        kwargs['max_height'] = max_height
+
+        if STYLED_POPUP_AVAILABLE:
+            manager = styled_popup.StyleSheetManager()
+            stylesheet = manager.get_stylesheet(
+                self.view.settings().get("color_scheme"))["content"]
+
+            style = stylesheet
         else:
-            self.view.show_popup(content, max_width=max_width,
-                                 max_height=max_height)
+            style = ''
+
+        try:
+            kwargs['on_navigate'] = self.popup_navigate
+        except AttributeError:
+            pass
+
+        if additional_style:
+            style += additional_style
+        if style:
+            style = '<style>{0}</style>'.format(style)
+
+        content = '<html><body>{0}{1}</body></html>'.format(style, msg)
+        self.view.show_popup(content, **kwargs)
 
     def show_doc_in_panel(self, content, panel_name='doc_link_content',
                           syntax="Packages/Text/Plain text.tmLanguage"):
@@ -501,20 +531,19 @@ class DocLink(EntitySelector):
     def show_doc_in_file(self, file_, region=None, row=0, col=0,
                          show_at_top=True):
         """Opens the file and shows the given region."""
-        logger.debug('show_doc_in_file')
         status_message_suffix = ''
 
         if (file_ is None):
             status_message_suffix = 'not found'
         elif (file_ == self.view.file_name()):
-            logger.debug('in current file')
+            logger.info('in current file')
             self.view.sel().clear()
             self.view.sel().add(region)
             if show_at_top:
-               line = self.view.line(region)
-               line = self.view.line(line.begin() - 1)
-               v = self.view.text_to_layout(line.begin())
-               self.view.set_viewport_position(v, True)
+                line = self.view.line(region)
+                line = self.view.line(line.begin() - 1)
+                v = self.view.text_to_layout(line.begin())
+                self.view.set_viewport_position(v, True)
             else:
                 self.view.show(region, True)
 
@@ -525,17 +554,18 @@ class DocLink(EntitySelector):
             status_message_suffix = 'found in other file'
             if (region is None):
                 view = self.view.window().open_file(
-                            "{0}:{1}:{2}".format(file_, row, col),
-                             sublime.ENCODED_POSITION)
+                    "{0}:{1}:{2}".format(file_, row, col),
+                    sublime.ENCODED_POSITION)
                 if ((row != 0) and (col != 0)):
                     sublime.set_timeout_async(
-                        lambda: self.show_and_select_opened_file(view, region,
-                                    row, col, show_at_top), 0)
+                        lambda: self.show_and_select_opened_file(
+                            view, region, row, col, show_at_top), 0)
             else:
-                view = self.view.window().open_file(file_, sublime.ENCODED_POSITION)
+                view = self.view.window().open_file(
+                    file_, sublime.ENCODED_POSITION)
                 sublime.set_timeout_async(
-                    lambda: self.show_and_select_opened_file(view, region,
-                                row, col, show_at_top), 0)
+                    lambda: self.show_and_select_opened_file(
+                        view, region, row, col, show_at_top), 0)
 
         return status_message_suffix
 
