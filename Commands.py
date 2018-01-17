@@ -5,17 +5,20 @@ from EntitySelect import EntitySelector, DocLink, Highlight, PreemptiveHighlight
 
 import logging
 logger = logging.getLogger(__name__)
-logger.setLevel('DEBUG')
+# logger.setLevel('DEBUG')
 
 
 class EntitySelectListenerCommand(sublime_plugin.EventListener):
 
     def on_selection_modified_async(self, view):
-        # logger.debug('Running on_modified')
+        # Workaround to correct the command getting the wrong view.
+        # on_activated works correctly for whatever reason.
+        view = view.window().active_view()
+        logger.debug('Running on_modified: %s (%s)', view.id(), view.file_name())
         EntitySelector.match_entity(view)
 
     def on_activated_async(self, view):
-        # logger.debug('Running on_activated')
+        logger.debug('Running on_activated: %s (%s)', view.id(), view.file_name())
         EntitySelector.match_entity(view)
 
 
