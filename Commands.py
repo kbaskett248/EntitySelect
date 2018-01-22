@@ -13,7 +13,7 @@ class EntitySelectListenerCommand(sublime_plugin.EventListener):
     def on_selection_modified_async(self, view):
         # Workaround to correct the command getting the wrong view.
         # on_activated works correctly for whatever reason.
-        view = view.window().active_view()
+        view = sublime.active_window().active_view()
         logger.debug('Running on_modified: %s (%s)', view.id(), view.file_name())
         EntitySelector.match_entity(view)
 
